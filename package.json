@@ -1,0 +1,21 @@
+{
+  "name": "claw-universal-dev-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Universal AI-agent development workspace for project planning, implementation, audit and release workflows.",
+  "scripts": {
+    "check": "node --check openclaw-dev-agents.js",
+    "agents:list": "node -e \"import('./openclaw-dev-agents.js').then(m => console.log(JSON.stringify(m.listAgents(), null, 2)))\"",
+    "prompt:example": "node -e \"import('./openclaw-dev-agents.js').then(m => console.log(m.buildRoutedPrompt('Проверить оплату, баланс и webhook idempotency')))\""
+  },
+  "keywords": [
+    "openclaw",
+    "agents",
+    "ai-agents",
+    "development-workspace",
+    "project-audit",
+    "qa-checklist"
+  ],
+  "license": "UNLICENSED"
+}
