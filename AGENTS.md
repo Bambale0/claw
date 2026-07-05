@@ -1,628 +1,337 @@
-# AGENTS.md — OpenClaw development team
+# AGENTS.md — Claw Universal Development Workspace
 
-This repository is a **new standalone project workspace** for building an AI Telegram Bot + Telegram Mini App from a proven production core.
+`claw` — универсальный репозиторий для разработки проектов с AI-агентами: Telegram-боты, Mini App, SaaS, backend-сервисы, frontend-приложения, интеграции API, автоматизации, парсеры, платежи, CRM, маркетплейсы и внутренние инструменты.
 
-Do **not** bind this project to any old repository, old domain, old brand, old bot token, old payment key, or old AI provider key.
-
-The old project can be used only as a technical reference for architecture and UX patterns. This repository must become its own product.
+Главная идея: **не тащить хаос из проекта в проект**, а каждый раз стартовать с понятного процесса: цель → архитектура → задачи → код → тесты → аудит → релиз.
 
 ---
 
-## 1. Project goal
+## 1. Назначение репозитория
 
-Build a production-ready AI Telegram Bot + Telegram Mini App with:
+Этот репозиторий нужен как:
 
-- aiogram 3 Telegram bot.
-- Webhook-first production runtime.
-- Telegram Mini App.
-- Image generation flow.
-- Video generation flow.
-- Reference image/video upload flow.
-- Payment and credit balance system.
-- Admin panel.
-- Prompt by photo/video flow.
-- Feed, prompt library, repeat, remix.
-- Provider routing.
-- AI provider webhooks.
-- Payment provider webhooks.
-- SQLite-first DB with optional Postgres path.
-- Tests, deployment scripts, `.env.example`, and rollback notes.
+- база инструкций для OpenClaw / Codex / AI-агентов;
+- шаблон для старта нового проекта;
+- набор правил разработки и аудита;
+- маршрутизатор задач по ролям агентов;
+- чеклист качества перед релизом;
+- рабочий справочник для проектирования, тестирования и поддержки.
+
+Репозиторий **не должен быть привязан** к одному старому проекту, домену, бренду, токену, API-провайдеру или конкретной бизнес-нише.
 
 ---
 
-## 2. Non-negotiable rules
+## 2. Золотые правила
 
-1. Do not hardcode old repo, old domain, old brand, old secrets, old payment credentials, or old provider keys.
-2. Preserve the production architecture: config → states → keyboards → handlers → services → database → webhooks → result delivery.
-3. Every user-facing feature must be reachable through Telegram UI or Mini App UI.
-4. All temporary user choices must live in `FSMContext`, not in global variables.
-5. Prices, model list, provider flags, brand texts, domains, and payment settings must be config-driven.
-6. Never expose secrets in code, logs, examples, screenshots, tests, or docs.
-7. Webhooks must verify signatures where supported.
-8. Payment webhooks must be idempotent.
-9. Provider payload changes must be checked against current docs or known working samples.
-10. Every meaningful change needs tests or a written reason why tests could not be run.
-11. Common handlers must not intercept specialized FSM handlers.
-12. Wrong provider routing must fail loudly, not silently fallback.
+1. Не хранить секреты в репозитории: токены, ключи, пароли, cookie, приватные URL, `.env`, дампы БД.
+2. Любая новая фича должна иметь понятный пользовательский сценарий.
+3. Любая интеграция с внешним API должна иметь проверенный payload, обработку ошибок и логирование без секретов.
+4. Любая оплата, баланс, бонус, реферал или покупка должны быть идемпотентными.
+5. Любой webhook должен проверять подпись или иметь другой механизм доверия.
+6. Любая загрузка файлов должна иметь ограничения по размеру, типу, пути хранения и времени жизни.
+7. Любой admin-flow должен проверять права доступа.
+8. Любой frontend-flow должен иметь состояния loading / error / empty / success.
+9. Любой backend-flow должен иметь валидацию входных данных, нормальные статусы ошибок и тестируемую бизнес-логику.
+10. Любой агент должен возвращать не только результат, но и список изменённых файлов, тесты, риски и следующий шаг.
+11. Нельзя молча подменять провайдера, модель, тариф, статус оплаты или способ доставки результата.
+12. Если тесты не запускались, это нужно явно написать и объяснить почему.
 
 ---
 
-## 3. Target repository structure
+## 3. Универсальная структура проекта
+
+Для нового проекта ориентируйся на такую структуру. Не обязательно создавать всё сразу, но границы должны быть понятны.
 
 ```text
 .
 ├── AGENTS.md
-├── openclaw-dev-agents.js
+├── README.md
 ├── .env.example
-├── requirements.txt
-├── start.sh
-├── stop.sh
-├── bot/
-│   ├── __init__.py
-│   ├── main.py
-│   ├── config.py
-│   ├── env.py
-│   ├── states.py
-│   ├── keyboards.py
-│   ├── database.py
-│   ├── db.py
-│   ├── postgres_aiosqlite.py
-│   ├── miniapp.py
-│   ├── handlers/
-│   │   ├── common.py
-│   │   ├── generation.py
-│   │   ├── payments.py
-│   │   ├── admin.py
-│   │   ├── image_analyzer.py
-│   │   └── batch_generation.py
-│   ├── services/
-│   │   ├── preset_manager.py
-│   │   ├── reference_storage_service.py
-│   │   ├── subscription_service.py
-│   │   ├── cryptobot_service.py
-│   │   ├── lava_service.py
-│   │   ├── yookassa_service.py
-│   │   ├── kling_service.py
-│   │   ├── kie_market_service.py
-│   │   ├── nano_banana_2_service.py
-│   │   ├── nano_banana_pro_service.py
-│   │   ├── gpt_image_service.py
-│   │   ├── seedream_service.py
-│   │   ├── grok_service.py
-│   │   ├── veo_service.py
-│   │   └── gemini_service.py
-│   └── utils/
-├── data/
-│   ├── price.json
-│   └── presets.json
-├── static/
-│   └── uploads/
+├── .gitignore
+├── docs/
+│   ├── WORKFLOW.md
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   ├── DEPLOYMENT.md
+│   └── QA.md
+├── templates/
+│   ├── PROJECT_BRIEF.md
+│   ├── FEATURE_TASK.md
+│   ├── AUDIT_CHECKLIST.md
+│   └── HANDOFF_REPORT.md
+├── src/ или bot/ или app/
 ├── tests/
-└── scripts/
+├── scripts/
+├── migrations/
+└── openclaw-dev-agents.js
+```
+
+### Если это Telegram-бот
+
+```text
+bot/
+├── main.py
+├── config.py
+├── states.py
+├── keyboards.py
+├── handlers/
+├── services/
+├── repositories/
+├── middlewares/
+└── utils/
+```
+
+### Если это web / SaaS
+
+```text
+app/
+├── api/
+├── core/
+├── models/
+├── services/
+├── repositories/
+├── schemas/
+├── workers/
+└── frontend/ или web/
+```
+
+### Если это интеграционный сервис
+
+```text
+src/
+├── config/
+├── clients/
+├── adapters/
+├── services/
+├── jobs/
+├── storage/
+└── observability/
 ```
 
 ---
 
-## 4. Required OpenClaw agent roles
+## 4. Роли агентов
 
-The JS registry `openclaw-dev-agents.js` defines the role prompts and task router.
+`openclaw-dev-agents.js` содержит реестр ролей и маршрутизатор задач. Используй его как основной источник для назначения работ.
 
-Use these agents:
+Базовые роли:
 
-1. `supervisor` — breaks down tasks, assigns agents, checks readiness.
-2. `architect` — owns project skeleton, module boundaries, config surface.
-3. `fsm_ux_engineer` — owns Telegram screens, callbacks, keyboards, FSM transitions.
-4. `generation_engineer` — owns image/video task lifecycle.
-5. `provider_integrator` — owns external AI provider services, payloads, webhooks.
-6. `payments_engineer` — owns credits, packages, transactions, promo codes, idempotency.
-7. `miniapp_engineer` — owns Telegram Mini App frontend/backend API.
-8. `db_migration_engineer` — owns schema, migrations, SQLite/Postgres path.
-9. `qa_tester` — owns tests, regression paths, manual QA.
-10. `security_reviewer` — owns secrets, auth, uploads, webhook verification.
-11. `devops_release` — owns deployment, systemd, logs, backup, rollback.
-12. `code_reviewer` — reviews changes before merge.
+1. `supervisor` — разбивает цель на задачи, назначает агентов, проверяет готовность.
+2. `product_owner` — уточняет бизнес-цель, пользователей, сценарии и критерии успеха.
+3. `architect` — отвечает за архитектуру, границы модулей, структуру проекта.
+4. `backend_engineer` — реализует backend, API, бизнес-логику, очереди, интеграции.
+5. `frontend_engineer` — реализует UI, состояния loading/error/empty/success, адаптивность.
+6. `bot_engineer` — реализует Telegram/Discord/WhatsApp bot flows, FSM, клавиатуры, webhook.
+7. `ai_integrator` — интегрирует AI-провайдеров, payload, модели, webhooks, polling.
+8. `payments_engineer` — реализует платежи, баланс, бонусы, покупки, premium, рефералы.
+9. `db_engineer` — отвечает за схему БД, миграции, индексы, целостность данных.
+10. `qa_tester` — пишет тесты, smoke/regression/e2e чеклисты, проверяет сценарии.
+11. `security_reviewer` — проверяет секреты, auth, webhooks, uploads, permissions.
+12. `devops_release` — отвечает за запуск, deploy, systemd/docker, backup, rollback, logs.
+13. `docs_writer` — ведёт README, инструкции, changelog, handoff-отчёты.
+14. `code_reviewer` — проверяет изменения перед merge.
 
-Example usage:
+---
 
-```js
-import { buildRoutedPrompt } from "./openclaw-dev-agents.js";
+## 5. Стандартный workflow задачи
 
-console.log(buildRoutedPrompt("Сделай FSM flow для создания фото с выбором модели и референсами"));
-console.log(buildRoutedPrompt("Проверь webhook оплаты и idempotency начисления баланса"));
+Каждая задача должна проходить по такому маршруту:
+
+```text
+1. Понять цель и контекст.
+2. Найти владельца слоя: frontend / backend / bot / db / provider / payment / devops / docs.
+3. Проверить существующий код и соседние сценарии.
+4. Сформулировать acceptance criteria.
+5. Сделать минимальное чистое изменение.
+6. Добавить или обновить тесты.
+7. Проверить loading/error/empty/success, если есть UI.
+8. Проверить безопасность: секреты, права, валидация, webhooks.
+9. Подготовить отчёт: что изменено, как проверить, риски, следующий шаг.
 ```
 
 ---
 
-## 5. Required FSM groups
+## 6. Acceptance criteria для любой фичи
 
-Create `bot/states.py` with at least these groups:
+Фича считается готовой, если:
 
-```python
-from aiogram.fsm.state import State, StatesGroup
+- понятно, для кого она сделана и какую проблему решает;
+- есть основной успешный сценарий;
+- есть обработка ошибок;
+- есть пустое состояние, если данных может не быть;
+- есть проверка прав доступа, если сценарий не публичный;
+- есть валидация входных данных;
+- есть тест или ручной чеклист;
+- нет секретов в коде и логах;
+- README / docs обновлены, если изменился запуск или поведение;
+- агент написал, что именно проверено.
 
+---
 
-class GenerationStates(StatesGroup):
-    waiting_for_input = State()
-    waiting_for_repeat_prompt = State()
+## 7. Проверка frontend
 
-    waiting_for_image = State()
-    waiting_for_video = State()
-    waiting_for_video_prompt = State()
+Для любого frontend или Mini App обязательно проверить:
 
-    uploading_reference_images = State()
-    uploading_reference_videos = State()
-    confirming_reference_images = State()
+- routing;
+- loading state;
+- error state;
+- empty state;
+- success state;
+- mobile layout;
+- desktop layout;
+- Telegram WebApp initData / start_param, если это Telegram Mini App;
+- отсутствие падения при неавторизованном пользователе;
+- повторную загрузку страницы;
+- поведение при медленном API;
+- поведение при 401 / 403 / 404 / 500;
+- доступность основных кнопок и действий.
 
-    waiting_for_reference_video = State()
-    waiting_for_video_start_image = State()
+---
 
-    waiting_for_motion_character_image = State()
-    waiting_for_motion_video = State()
+## 8. Проверка backend
 
-    waiting_for_avatar_audio = State()
+Для backend обязательно проверить:
 
-    selecting_duration = State()
-    selecting_aspect_ratio = State()
-    selecting_quality = State()
+- запуск приложения;
+- загрузку config/env;
+- подключение к БД;
+- миграции;
+- health endpoint;
+- основные API routes;
+- авторизацию;
+- валидацию payload;
+- обработку ошибок внешних API;
+- idempotency для платежей/webhooks;
+- логи без секретов;
+- graceful shutdown;
+- backup/restore, если есть данные пользователей.
 
-    waiting_for_kling_negative_prompt = State()
-    waiting_for_kling_cfg_scale = State()
+---
 
-    waiting_for_veo_seed = State()
-    waiting_for_veo_watermark = State()
-    waiting_for_veo_extend_prompt = State()
+## 9. Проверка Telegram Bot / WebApp
 
-    waiting_for_omni_seed = State()
-    waiting_for_omni_audio_ids = State()
-    waiting_for_omni_character_ids = State()
-    waiting_for_omni_voice_base = State()
-    waiting_for_omni_voice_name = State()
-    waiting_for_omni_voice_description = State()
-    waiting_for_omni_example_dialogue = State()
-    waiting_for_omni_character_name = State()
-    waiting_for_omni_character_audio_ids = State()
+Если проект содержит Telegram-бота или Mini App, проверить:
 
+- `/start`;
+- deep links и `start_param`;
+- авторизацию Telegram WebApp;
+- callback buttons;
+- FSM transitions;
+- возврат в меню;
+- повторный запуск сценария;
+- отмену сценария;
+- права admin;
+- webhook или polling режим;
+- доставку результата пользователю;
+- обработку неизвестного текста/команды;
+- поведение без username, без photo, без premium, без языка.
 
-class PaymentStates(StatesGroup):
-    selecting_package = State()
-    waiting_promo_code = State()
-    confirming_payment = State()
-    waiting_payment = State()
-    waiting_partner_withdraw_requisites = State()
-    waiting_partner_withdraw_amount = State()
-    waiting_partner_exchange_amount = State()
+---
 
+## 10. Проверка AI/API provider integration
 
-class AdminStates(StatesGroup):
-    waiting_broadcast_text = State()
-    confirming_broadcast = State()
-    waiting_user_id = State()
-    waiting_partner_user_id = State()
-    waiting_credits_amount = State()
-    waiting_price_value = State()
-    waiting_prompt_id = State()
-    waiting_prompt_reject_reason = State()
-    waiting_promo_code_value = State()
-    waiting_ai_request = State()
-    confirming_ai_action = State()
+Для любого внешнего AI/API провайдера:
 
+- payload сверяется с актуальной документацией или известным рабочим примером;
+- ключи берутся только из env/secrets;
+- ошибки нормализуются;
+- timeout/retry продуманы;
+- rate limits не игнорируются;
+- результат сохраняется в БД;
+- raw response можно безопасно логировать без секретов;
+- webhook проверяется и идемпотентен;
+- polling не создаёт бесконечную нагрузку;
+- неверный provider/model не подменяется молча.
 
-class BatchGenerationStates(StatesGroup):
-    selecting_mode = State()
-    selecting_preset = State()
-    entering_prompts = State()
-    uploading_references = State()
-    confirming_batch = State()
-    selecting_batch_count = State()
+---
 
+## 11. Проверка payments / balance / premium
 
-class ImageAnalyzerStates(StatesGroup):
-    waiting_for_photo = State()
-    waiting_for_video_prompt = State()
-    waiting_for_photo_vk = State()
+Для платежей и баланса обязательно:
+
+- pending transaction создаётся до оплаты;
+- provider payment id сохраняется;
+- webhook можно повторить без двойного начисления;
+- баланс меняется через ledger/transaction, а не прямым хаотичным update;
+- refund/cancel/failed статусы обработаны;
+- admin начисления логируются;
+- бонусы и рефералы имеют антидубль;
+- premium имеет дату начала/окончания;
+- покупка доступна только после успешной оплаты или достаточного баланса.
+
+---
+
+## 12. Формат отчёта агента
+
+Каждый агент после работы возвращает:
+
+```md
+## Summary
+- Что сделано.
+
+## Changed files
+- `path/to/file` — зачем изменён.
+
+## Tests
+- Команды, которые запускались.
+- Результат.
+
+## Manual QA
+- Что проверено руками.
+
+## Risks
+- Что может сломаться.
+
+## Next steps
+- Что сделать дальше.
 ```
 
 ---
 
-## 6. Telegram UI contract
+## 13. Команды для быстрого использования
 
-### Main menu buttons
+Сгенерировать routed prompt:
 
-```text
-🚀 Open Mini App
-🖼 Create image
-🎬 Create video
-🎯 Motion Control
-📸 Prompt by photo
-🎞 Prompt by video
-🖼 Feed
-📚 Prompt library
-🤖 AI assistant
-🍌 Balance
-💬 Support
-🤝 Partners
-⋯ More
+```bash
+node -e "import('./openclaw-dev-agents.js').then(m => console.log(m.buildRoutedPrompt('Проверь оплату, баланс и webhook idempotency')))"
 ```
 
-### Image flow
+Проверить синтаксис JS:
 
-```text
-Main menu
-→ Create image
-→ Select image model
-→ Upload or skip reference images
-→ Configure ratio / quality / count
-→ User sends prompt
-→ Validate
-→ Check balance
-→ Deduct credits
-→ Create generation_task
-→ Call provider service
-→ Wait for webhook/polling
-→ Deliver result
-→ Show result actions
+```bash
+node --check openclaw-dev-agents.js
 ```
 
-Required callback names:
+Скопировать шаблоны в новый проект:
 
-```text
-create_image_text_new
-create_image_refs_new
-image_change_model
-model_banana_pro
-model_banana_2
-model_nano_banana_2_lite
-model_seedream_edit
-model_grok_i2i
-model_flux_pro
-model_wan_27
-ref_skip_new
-img_ref_continue_new
-ref_saved_library
-img_ratio_1_1
-img_ratio_16_9
-img_ratio_9_16
-img_ratio_4_3
-img_ratio_3_4
-img_quality_2k
-img_quality_4k
-img_quality_basic
-img_quality_high
-img_count_1
-img_count_2
-img_count_4
-img_count_6
-```
-
-### Video flow
-
-```text
-Main menu
-→ Create video
-→ Select video model
-→ Select type/media
-→ Upload required files if needed
-→ Configure ratio / duration / quality / special options
-→ User sends prompt
-→ Validate
-→ Check balance
-→ Deduct credits
-→ Create generation_task
-→ Call provider service
-→ Wait for webhook/polling
-→ Deliver result
-→ Show result actions
-```
-
-Video types:
-
-```text
-text      = Text → Video
-imgtxt    = Image + Text → Video
-video     = Video + Text → Video
-avatar    = Avatar + Audio → Video
-motion    = Motion Control
-audio     = Gemini Omni Audio ID
-character = Gemini Omni Character ID
-```
-
-Required callback names:
-
-```text
-create_video_new
-video_change_model
-video_change_media
-video_media_continue
-video_media_skip
-v_model_v3_pro
-v_model_v3_std
-v_model_v26_pro
-v_model_grok_imagine
-v_model_grok_imagine_v15
-v_model_seedance_2
-v_model_gemini_omni
-v_model_veo3
-v_model_veo3_fast
-v_model_veo3_lite
-v_model_glow
-v_type_text
-v_type_imgtxt
-v_type_video
-v_type_avatar
-v_type_motion
-ratio_16_9
-ratio_9_16
-ratio_1_1
-video_dur_4
-video_dur_5
-video_dur_6
-video_dur_8
-video_dur_10
-video_dur_15
-kling_negative_prompt_edit
-kling_cfg_scale_edit
-veo_translation_toggle
-veo_resolution_720p
-veo_resolution_1080p
-veo_resolution_4k
-veo_seed_edit
-veo_watermark_edit
-omni_mode_video
-omni_mode_audio
-omni_mode_character
-omni_resolution_720p
-omni_resolution_1080p
-omni_resolution_4k
-omni_seed_edit
-omni_audio_ids_edit
-omni_character_ids_edit
-```
-
-### Payment flow
-
-```text
-Main menu
-→ Balance
-→ Top up
-→ Select package
-→ Optional promo code
-→ Select payment provider
-→ Create pending transaction
-→ Show payment link
-→ Provider webhook
-→ Verify signature
-→ Idempotent crediting
-→ Notify user
-```
-
-Required callback names:
-
-```text
-menu_balance
-menu_topup
-choose_pay_{package_id}
-topup_enter_promo
-topup_remove_promo
-buy_stars_{package_id}
-buy_crypto_{package_id}
-buy_yookassa_{package_id}
-buy_lava_{package_id}
-check_payment_{transaction_id}
-```
-
-### Admin flow
-
-Required sections:
-
-```text
-📊 Stats
-👥 Users
-🤝 Partners
-📒 Finance/referrals
-💸 Prices
-🎟 Promo codes
-📚 Prompts
-🤖 AI admin
-⚙️ Broadcast
-🔐 Required channel subscription
-🏠 Main menu
-```
-
-Required callback names:
-
-```text
-admin_stats
-admin_users
-admin_partners
-admin_finance
-admin_prices
-admin_promocodes
-admin_prompts
-admin_ai
-admin_broadcast
-admin_required_subscription_toggle
-admin_back
+```bash
+cp AGENTS.md /path/to/project/AGENTS.md
+cp -r templates /path/to/project/templates
+cp -r docs /path/to/project/docs
 ```
 
 ---
 
-## 7. Screen implementation pattern
+## 14. Что делать при старте нового проекта
 
-Every important screen must have:
-
-```text
-1. render function
-2. keyboard builder
-3. callback handlers
-4. FSM transition
-```
-
-Example:
-
-```python
-async def show_some_screen(callback, state):
-    data = await state.get_data()
-    text = build_some_screen_text(data)
-    keyboard = get_some_screen_keyboard(data)
-
-    await callback.message.edit_text(
-        text,
-        reply_markup=keyboard,
-        parse_mode="HTML",
-    )
-
-    await state.set_state(SomeStates.some_state)
-
-
-def get_some_screen_keyboard(data):
-    builder = InlineKeyboardBuilder()
-    builder.button(text="✅ Continue", callback_data="some_continue")
-    builder.button(text="🔙 Back", callback_data="some_back")
-    builder.adjust(1)
-    return builder.as_markup()
-
-
-@router.callback_query(F.data == "some_continue")
-async def some_continue(callback, state):
-    await state.update_data(some_step_completed=True)
-    await show_next_screen(callback, state)
-    await callback.answer()
-```
+1. Заполни `templates/PROJECT_BRIEF.md`.
+2. Выбери стек и структуру.
+3. Опиши MVP в `README.md` проекта.
+4. Сформируй первые задачи через `templates/FEATURE_TASK.md`.
+5. Назначь роли через `openclaw-dev-agents.js`.
+6. Реализуй скелет проекта.
+7. Сразу добавь `.env.example`, tests, start script и health check.
+8. Не начинай интеграции платежей и AI-провайдеров без тестовых payload и webhook-плана.
 
 ---
 
-## 8. Router order
+## 15. Главный принцип
 
-Specialized routers first, common router last:
+Делай не “чтобы вроде работало”, а чтобы проект можно было:
 
-```python
-def setup_dispatcher(storage):
-    dp = Dispatcher(storage=storage)
-
-    dp.include_router(generation_router)
-    dp.include_router(image_analyzer_router)
-    dp.include_router(admin_router)
-    dp.include_router(payments_router)
-    dp.include_router(batch_generation_router)
-    dp.include_router(common_router)
-
-    return dp
-```
-
----
-
-## 9. Generation task lifecycle
-
-Every generation task must store:
-
-```text
-user_id
-telegram_id
-local_task_id
-provider_task_id
-type
-selected_model
-provider_model
-prompt
-effective_prompt
-cost
-aspect_ratio
-duration
-status
-result_url
-result_urls
-request_data
-source_feed_gen_id
-parent_generation_id
-action_type
-```
-
-Pipeline:
-
-```text
-User chooses model/settings/references
-→ user sends prompt
-→ validate inputs
-→ check balance
-→ deduct credits according to policy
-→ create local generation_task
-→ call provider
-→ store provider task id
-→ complete via webhook or polling
-→ deliver result
-→ show result actions
-```
-
----
-
-## 10. Required tests
-
-Minimum checklist:
-
-```text
-1. FSM states import correctly.
-2. Main menu keyboard builds.
-3. Image flow starts from create_image_text_new.
-4. Video flow starts from create_video_new.
-5. Model selection updates FSM data.
-6. Reference upload stores URL in FSM data.
-7. Prompt creates generation_task.
-8. Insufficient balance blocks generation.
-9. Provider queued response updates task_id.
-10. AI webhook completes task.
-11. Payment webhook credits transaction exactly once.
-12. Admin router rejects non-admin.
-13. Mini App validates Telegram initData.
-14. .env.example contains no real secrets.
-15. start.sh does not kill unrelated processes.
-```
-
----
-
-## 11. Done criteria
-
-A task is not done unless the agent returns:
-
-```text
-Summary:
-Changed files:
-How to test:
-Tests run:
-Risks:
-Next recommended step:
-```
-
-A milestone is not done unless these paths work without manual DB edits:
-
-```text
-/start → Create image → result
-/start → Create video → result
-/start → Balance → payment → credits
-/start → Feed → repeat/remix
-/admin → stats/prices/promo/broadcast
-Mini App → create image/video → task status/result
-```
-
----
-
-## 12. First implementation order
-
-```text
-1. Bootstrap project skeleton.
-2. Add config/env loader and .env.example.
-3. Add states.py.
-4. Add main menu and keyboards.
-5. Add DB schema and init.
-6. Add image FSM flow with mock provider.
-7. Add video FSM flow with mock provider.
-8. Add generation_tasks lifecycle.
-9. Add real providers one by one.
-10. Add payments and idempotent webhook.
-11. Add Mini App.
-12. Add admin panel.
-13. Add tests.
-14. Add deployment scripts.
-15. Run security review.
-```
-
-Do not start by wiring every AI model at once. First make the UX/task/payment skeleton stable, then attach providers.
+- понять;
+- запустить;
+- проверить;
+- доработать;
+- безопасно выкатить;
+- передать другому человеку или агенту.
